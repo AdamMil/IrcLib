@@ -26,6 +26,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 
+// TODO: don't keep users and channels around forever
+
 namespace IrcLib
 {
 
@@ -835,6 +837,7 @@ public class IrcClient
   {
     if(text == null) throw new ArgumentNullException();
     SendRawCommand("PRIVMSG " + MakeTargetList(to) + " :" + text);
+    OnMessageSent(to, text);
   }
 
   public void SendNotice(string to, string text)
@@ -1129,7 +1132,7 @@ public class IrcClient
         else
         {
           if(isNotice) OnNotice(from, args[0], message);
-          else OnMessage(from, args[0], message);
+          else OnMessageReceived(from, args[0], message);
         }
         break;
       }
@@ -1194,15 +1197,19 @@ public class IrcClient
 
   protected virtual void OnCTCPMessage(string from, string to, string command, string[] args)
   {
-    if(AreNamesEqual(to, Nickname))
+    if(AreNamesEqual(to, Nickname)) // if it was sent to us...
     {
-      if(string.Equals(command, "TIME", StringComparison.OrdinalIgnoreCase))
+      if(string.Equals(command, "PING", StringComparison.OrdinalIgnoreCase))
+      {
+        if(args.Length != 0) SendCTCPNotice(from, "PING " + args[0]);
+      }
+      else if(string.Equals(command, "TIME", StringComparison.OrdinalIgnoreCase))
       {
         SendCTCPNotice(from, "TIME " + DateTime.Now.ToString("r", CultureInfo.InvariantCulture));
       }
-      else if(string.Equals(command, "PING", StringComparison.OrdinalIgnoreCase))
+      else if(string.Equals(command, "VERSION", StringComparison.OrdinalIgnoreCase))
       {
-        if(args.Length != 0) SendCTCPNotice(from, "PING " + args[0]);
+        SendCTCPNotice(from, "VERSION IrcLib " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString());
       }
     }
   }
@@ -1248,7 +1255,11 @@ public class IrcClient
     OnUserLeftChannel(kicked, channelName);
   }
 
-  protected virtual void OnMessage(string from, string to, string text)
+  protected virtual void OnMessageReceived(string from, string to, string text)
+  {
+  }
+
+  protected virtual void OnMessageSent(IEnumerable<string> to, string text)
   {
   }
 
