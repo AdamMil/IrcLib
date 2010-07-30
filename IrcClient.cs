@@ -1053,7 +1053,7 @@ public class IrcClient
           case '=': channel.Flags &= ~(ChannelFlags.IsPrivate | ChannelFlags.IsSecret); break;
         }
 
-        foreach(string nickWithFlag in args[3].Split(' '))
+        foreach(string nickWithFlag in args[3].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
         {
           string nick = nickWithFlag;
           ChannelUserFlags userFlags = ChannelUserFlags.None;
@@ -1123,7 +1123,7 @@ public class IrcClient
           else
           {
             ctcpCommand = message.Substring(1, cmdSep-1);
-            ctcpArgs    = GetMatchStrings(parmsRe.Matches(message.Substring(cmdSep+1, message.Length-cmdSep-2)));
+            ctcpArgs    = GetParameterStrings(parmsRe.Matches(message.Substring(cmdSep+1, message.Length-cmdSep-2)));
           }
 
           if(isNotice) OnCTCPNotice(from, args[0], ctcpCommand, ctcpArgs);
@@ -1305,7 +1305,7 @@ public class IrcClient
     }
 
     string command = m.Groups["command"].Value, from = m.Groups["from"].Value, nickname = GetNickAndUpdateUser(from);
-    string[] args = GetMatchStrings(parmsRe.Matches(m.Groups["params"].Value));
+    string[] args = GetParameterStrings(parmsRe.Matches(m.Groups["params"].Value));
 
     if(char.IsDigit(command[0]))
     {
@@ -1595,7 +1595,7 @@ public class IrcClient
   int textBufferBytes;
   bool registered;
 
-  static string[] GetMatchStrings(MatchCollection matches)
+  static string[] GetParameterStrings(MatchCollection matches)
   {
     string[] values = new string[matches.Count];
     for(int i=0; i<values.Length; i++)
@@ -1608,7 +1608,7 @@ public class IrcClient
   static string GetRandomNick()
   {
     Random rand = new Random();
-    char[] chars = new char[9]; // 9 characters in the maximum nickname in the standard
+    char[] chars = new char[9]; // 9 characters in the maximum nickname length in the IRC standard
     for(int i=0; i<chars.Length; i++) chars[i] = (char)(rand.Next(26) + 'a');
     return new string(chars);
   }
@@ -1620,7 +1620,7 @@ public class IrcClient
                               RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline);
   
   static readonly Regex parmsRe =
-    new Regex(@"(?<=:)[^\x00\r\n]*|[^:\x00\x20\r\n][^\x00\x20\r\n]*", RegexOptions.Compiled | RegexOptions.Singleline);
+    new Regex(@":[^\x00\r\n]*|[^:\x00\x20\r\n][^\x00\x20\r\n]*", RegexOptions.Compiled | RegexOptions.Singleline);
 
   static readonly byte[] crlf = { 13, 10 };
 
