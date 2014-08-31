@@ -1,0 +1,1 @@
+This is a simple and easy-to-use IRC client library. It was created as part of the latest version of HalBot, but can be used for other things. It's not exactly suitable for all IRC tasks, but it works for what it's intended for.
